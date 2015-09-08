@@ -1,0 +1,12 @@
+[ClassVersion("1.0.0"), FriendlyName("cTeamCityAgent")] 
+class cTeamCityAgent : OMI_BaseResource
+{
+  [Key] string AgentName;
+  [Write,ValueMap{"Present", "Absent"},Values{"Present", "Absent"}] string Ensure;
+  [Write,ValueMap{"Started","Stopped"},Values{"Started", "Stopped"}] string State; 
+  [Write] string TeamCityAgentInstallationZipUrl;
+  [Write] string AgentHomeDirectory;
+  [Write] UInt32 AgentPort;
+  [Write] string ServerHostname;
+  [Write] UInt32 ServerPort;
+};
