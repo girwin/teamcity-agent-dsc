@@ -9,7 +9,6 @@ function Get-TargetResource
         [string]$AgentName,
         [ValidateSet("Started", "Stopped")]
         [string]$State = "Started",                
-        [string]$TeamCityAgentInstallationZipUrl,
         [string]$AgentHomeDirectory,
         [int]$AgentPort,
         [string]$ServerHostname,
@@ -62,10 +61,7 @@ function Set-TargetResource
         [ValidateNotNullOrEmpty()]
         [string]$AgentName,
         [ValidateSet("Started", "Stopped")]
-        [string]$State = "Started",    
-        [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]            
-        [string]$TeamCityAgentInstallationZipUrl,
+        [string]$State = "Started",               
         [string]$AgentHomeDirectory = "C:\TeamCity\Agent",
         [int]$AgentPort = 9090,
         [Parameter(Mandatory)]
@@ -97,8 +93,7 @@ function Set-TargetResource
     elseif ($Ensure -eq "Present" -and $currentResource["Ensure"] -eq "Absent") 
     {
         Write-Verbose "Installing TeamCity Agent..."
-        Install-TeamCityAgent -AgentName $AgentName -TeamCityAgentInstallationZipUrl $TeamCityAgentInstallationZipUrl `
-            -AgentHomeDirectory $AgentHomeDirectory -AgentPort $AgentPort -ServerHostname $ServerHostname -ServerPort $ServerPort
+        Install-TeamCityAgent -AgentName $AgentName -AgentHomeDirectory $AgentHomeDirectory -AgentPort $AgentPort -ServerHostname $ServerHostname -ServerPort $ServerPort
         Write-Verbose "TeamCity Agent installed!"
     }
 
@@ -121,7 +116,6 @@ function Test-TargetResource
         [string]$AgentName,
         [ValidateSet("Started", "Stopped")]
         [string]$State = "Started",                
-        [string]$TeamCityAgentInstallationZipUrl,
         [string]$AgentHomeDirectory,
         [int]$AgentPort,
         [string]$ServerHostname,
@@ -173,10 +167,7 @@ function Install-TeamCityAgent
 {
     param (
         [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
         [string]$AgentName,
-        [Parameter(Mandatory=$True)]
-        [string]$TeamCityAgentInstallationZipUrl,
         [Parameter(Mandatory=$True)]
         [string]$AgentHomeDirectory,
         [Parameter(Mandatory=$True)]
@@ -187,13 +178,15 @@ function Install-TeamCityAgent
         [int]$ServerPort                     
     )
    
+    
     if ((test-path $AgentHomeDirectory) -ne $true) {
         New-Item $AgentHomeDirectory -type directory
     }
 
-    $installationZipFilePath = "$AgentHomeDirectory\TeamCityAgent.zip"
+    $installationZipFilePath = "$AgentHomeDirectory\TeamCityAgent.zip"        
     if ((test-path $installationZipFilePath) -ne $true) 
     {
+        $TeamCityAgentInstallationZipUrl = "http://$ServerHostname:$ServerPort/update/buildAgent.zip"
         Write-Verbose "Downloading TeamCity Agent installation zip from $TeamCityAgentInstallationZipUrl to $installationZipFilePath"
         Request-File $TeamCityAgentInstallationZipUrl $installationZipFilePath
         Write-Verbose "Downloaded TeamCity Agent installation zip to $installationZipFilePath"

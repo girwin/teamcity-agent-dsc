@@ -14,21 +14,14 @@ Configuration SampleConfig
         cTeamCityAgent TeamCityAgent 
         { 
             Ensure = "Present" 
-            State = "Started"
-            
-            # Leave as OracleXE             
-            Name = "OracleXE"
- 
-            # The url to dowload the Oracle XE installation zip file
-            InstallationZipUrl = "http://someserver/OracleXE112_Win64.zip"
-            
-            # The password to configure Oracle XE system account with
-            OracleSystemPassword = "somepassword"            
+            State = "Started"         
+            AgentName = "TeamCity Build Agent"             
+            ServerHostname = "the public hostname or ip of your teamcity server;     
         }
     }
 }
  
-SampleConfig -TeamCityServerUrl "http://teamcityserver/" 
+SampleConfig 
 
 Start-DscConfiguration .\SampleConfig -Verbose -wait
 
@@ -39,7 +32,7 @@ Test-DscConfiguration
 
 When `Ensure` is set to `Present`, the resource will:
 
- 1. Download the TeamCity Agent Zip from the TeamCity Server at the specified url
+ 1. Download the TeamCity Agent Zip from the TeamCity Server
  2. Install and configure TeamCity Agent
  3. Setup TeamCity Agent as a Windows Service 
 
