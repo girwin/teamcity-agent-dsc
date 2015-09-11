@@ -10,6 +10,7 @@ function Get-TargetResource
         [ValidateSet("Started", "Stopped")]
         [string]$State = "Started",                
         [string]$AgentHomeDirectory,
+        [string]$AgentHostname,        
         [int]$AgentPort,
         [string]$ServerHostname,
         [int]$ServerPort
@@ -63,11 +64,16 @@ function Set-TargetResource
         [ValidateSet("Started", "Stopped")]
         [string]$State = "Started",               
         [string]$AgentHomeDirectory = "C:\TeamCity\Agent",
-        [int]$AgentPort = 9090,
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$AgentHostname,
+        [Parameter(Mandatory)]
+        [int]$AgentPort,
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$ServerHostname,
-        [int]$ServerPort = 80
+        [Parameter(Mandatory)]
+        [int]$ServerPort
     )
 
     if ($Ensure -eq "Absent" -and $State -eq "Started") 
@@ -93,7 +99,8 @@ function Set-TargetResource
     elseif ($Ensure -eq "Present" -and $currentResource["Ensure"] -eq "Absent") 
     {
         Write-Verbose "Installing TeamCity Agent..."
-        Install-TeamCityAgent -AgentName $AgentName -AgentHomeDirectory $AgentHomeDirectory -AgentPort $AgentPort -ServerHostname $ServerHostname -ServerPort $ServerPort
+        Install-TeamCityAgent -AgentName $AgentName -AgentHomeDirectory $AgentHomeDirectory `
+            -AgentHostname $AgentHostname -AgentPort $AgentPort -ServerHostname $ServerHostname -ServerPort $ServerPort
         Write-Verbose "TeamCity Agent installed!"
     }
 
@@ -117,6 +124,7 @@ function Test-TargetResource
         [ValidateSet("Started", "Stopped")]
         [string]$State = "Started",                
         [string]$AgentHomeDirectory,
+        [string]$AgentHostname,        
         [int]$AgentPort,
         [string]$ServerHostname,
         [int]$ServerPort
@@ -171,6 +179,8 @@ function Install-TeamCityAgent
         [Parameter(Mandatory=$True)]
         [string]$AgentHomeDirectory,
         [Parameter(Mandatory=$True)]
+        [string]$AgentHostname,
+        [Parameter(Mandatory=$True)]
         [int]$AgentPort,
         [Parameter(Mandatory=$True)]
         [string]$ServerHostname,        
@@ -186,7 +196,7 @@ function Install-TeamCityAgent
     $installationZipFilePath = "$AgentHomeDirectory\TeamCityAgent.zip"        
     if ((test-path $installationZipFilePath) -ne $true) 
     {
-        $TeamCityAgentInstallationZipUrl = "http://$ServerHostname:$ServerPort/update/buildAgent.zip"
+        $TeamCityAgentInstallationZipUrl = "http://$($ServerHostname):$($ServerPort)/update/buildAgent.zip"
         Write-Verbose "Downloading TeamCity Agent installation zip from $TeamCityAgentInstallationZipUrl to $installationZipFilePath"
         Request-File $TeamCityAgentInstallationZipUrl $installationZipFilePath
         Write-Verbose "Downloaded TeamCity Agent installation zip to $installationZipFilePath"
@@ -199,9 +209,13 @@ function Install-TeamCityAgent
 	# token replace oracle username and password
     Write-Verbose "Configuring TeamCity Agent with system password before installation."
     $agentConfigfile = "$AgentHomeDirectory\conf\buildAgent.dist.properties"
-    (cat $agentConfigfile) -replace 'serverUrl=http://localhost:8111/', "serverUrl=http://$ServerHostname:$ServerPort/" `
+    $agentConfigfile = "$AgentHomeDirectory\conf\buildAgent.dist.properties"
+    (cat "$AgentHomeDirectory\conf\buildAgent.dist.properties") `
+        -replace 'serverUrl=http://localhost:8111/', "serverUrl=http://$($ServerHostname):$($ServerPort)/" `
         -replace 'name=', "name=$AgentName" `
-        -replace 'ownPort=9090', "ownPort=$AgentPort" > $agentConfigfile    
+        -replace 'ownPort=9090', "ownPort=$AgentPort" `
+        -replace '#ownAddress=<own IP address or server-accessible domain name>', "ownAddress=$AgentHostname"
+        > "$AgentHomeDirectory\conf\buildAgent.properties"    
     
     # TODO setup TeamCity Agent Windows Service
 }

@@ -5,6 +5,7 @@ class cTeamCityAgent : OMI_BaseResource
   [Write,ValueMap{"Present", "Absent"},Values{"Present", "Absent"}] string Ensure;
   [Write,ValueMap{"Started","Stopped"},Values{"Started", "Stopped"}] string State; 
   [Write] string AgentHomeDirectory;
+  [Write] string AgentHostname;
   [Write] UInt32 AgentPort;
   [Write] string ServerHostname;
   [Write] UInt32 ServerPort;
