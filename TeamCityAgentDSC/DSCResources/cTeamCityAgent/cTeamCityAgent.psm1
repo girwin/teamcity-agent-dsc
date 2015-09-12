@@ -130,7 +130,7 @@ function Test-TargetResource
         [int]$ServerPort
     )
  
-    $currentResource = (Get-TargetResource -Name $AgentName)
+    $currentResource = (Get-TargetResource -AgentName $AgentName -AgentHomeDirectory $AgentHomeDirectory)
 
     $ensureMatch = $currentResource["Ensure"] -eq $Ensure
     Write-Verbose "Ensure: $($currentResource["Ensure"]) vs. $Ensure = $ensureMatch"
