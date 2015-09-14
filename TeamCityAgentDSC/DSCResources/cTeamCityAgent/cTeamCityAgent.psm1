@@ -104,7 +104,7 @@ function Set-TargetResource
     elseif ($Ensure -eq "Present" -and $currentResource["Ensure"] -eq "Absent") 
     {
         Write-Verbose "Installing TeamCity Agent..."
-        Install-TeamCityAgent -AgentName $AgentName -AgentHomeDirectory $AgentHomeDirectory -AgentWorkDirectory $AgentWorkDirectory`
+        Install-TeamCityAgent -AgentName $AgentName -AgentHomeDirectory $AgentHomeDirectory -AgentWorkDirectory $AgentWorkDirectory `
             -AgentHostname $AgentHostname -AgentPort $AgentPort -ServerHostname $ServerHostname -ServerPort $ServerPort
         Write-Verbose "TeamCity Agent installed!"
     }
