@@ -10,6 +10,7 @@ function Get-TargetResource
         [ValidateSet("Started", "Stopped")]
         [string]$State = "Started",                
         [string]$AgentHomeDirectory,
+        [string]$AgentWorkDirectory,        
         [string]$AgentHostname,        
         [int]$AgentPort,
         [string]$ServerHostname,
@@ -65,6 +66,7 @@ function Set-TargetResource
         [ValidateSet("Started", "Stopped")]
         [string]$State = "Started",               
         [string]$AgentHomeDirectory = "C:\TeamCity\Agent",
+        [string]$AgentWorkDirectory = "C:\TeamCity\Agent\work",
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$AgentHostname,
@@ -102,7 +104,7 @@ function Set-TargetResource
     elseif ($Ensure -eq "Present" -and $currentResource["Ensure"] -eq "Absent") 
     {
         Write-Verbose "Installing TeamCity Agent..."
-        Install-TeamCityAgent -AgentName $AgentName -AgentHomeDirectory $AgentHomeDirectory `
+        Install-TeamCityAgent -AgentName $AgentName -AgentHomeDirectory $AgentHomeDirectory -AgentWorkDirectory $AgentWorkDirectory`
             -AgentHostname $AgentHostname -AgentPort $AgentPort -ServerHostname $ServerHostname -ServerPort $ServerPort
         Write-Verbose "TeamCity Agent installed!"
     }
@@ -127,6 +129,7 @@ function Test-TargetResource
         [ValidateSet("Started", "Stopped")]
         [string]$State = "Started",                
         [string]$AgentHomeDirectory,
+        [string]$AgentWorkDirectory,
         [string]$AgentHostname,        
         [int]$AgentPort,
         [string]$ServerHostname,
@@ -203,6 +206,8 @@ function Install-TeamCityAgent
         [Parameter(Mandatory=$True)]
         [string]$AgentHomeDirectory,
         [Parameter(Mandatory=$True)]
+        [string]$AgentWorkDirectory,        
+        [Parameter(Mandatory=$True)]
         [string]$AgentHostname,
         [Parameter(Mandatory=$True)]
         [int]$AgentPort,
@@ -238,6 +243,7 @@ function Install-TeamCityAgent
        'name=' = "name=$AgentName";
        'ownPort=9090' = "ownPort=$AgentPort";
        '#ownAddress=<own IP address or server-accessible domain name>' = "ownAddress=$AgentHostname";
+       'workDir=../work' = "workDir=$AgentWorkDirectory";
     }       
     Write-Verbose "Configured TeamCity Agent in file $teamCityConfigFile"
               
