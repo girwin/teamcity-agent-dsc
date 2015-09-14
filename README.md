@@ -17,8 +17,11 @@ Configuration SampleConfig
             State = "Started"         
             AgentName = "TeamCity Build Agent"             
             ServerHostname = "the public hostname or ip of your teamcity server;
-            AgentHomeDirectory = 'C:\TeamCity\Agent';
-            AgentWorkDirectory = 'F:\TeamCity\Agent\work';    
+            ServerPort = 80;
+            AgentHostname = "agent_hostname_or_ip";
+            AgentPort = 9090;            
+            AgentHomeDirectory = "C:\TeamCity\Agent";
+            AgentWorkDirectory = "F:\TeamCity\Agent\work";    
         }
     }
 }
