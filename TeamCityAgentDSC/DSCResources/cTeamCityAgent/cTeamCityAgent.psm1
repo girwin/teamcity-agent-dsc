@@ -235,9 +235,9 @@ function Install-TeamCityAgent
     $teamCityConfigFile = "$AgentHomeDirectory\\conf\\buildAgent.properties"
     Write-TokenReplacedFile "$AgentHomeDirectory\\conf\\buildAgent.dist.properties" $teamCityConfigFile @{
        'serverUrl=http://localhost:8111/' = "serverUrl=http://$($ServerHostname):$($ServerPort)";
-       'name=', "name=$AgentName";
-       'ownPort=9090', "ownPort=$AgentPort";
-       '#ownAddress=<own IP address or server-accessible domain name>', "ownAddress=$AgentHostname";
+       'name=' = "name=$AgentName";
+       'ownPort=9090' = "ownPort=$AgentPort";
+       '#ownAddress=<own IP address or server-accessible domain name>' = "ownAddress=$AgentHostname";
     }       
     Write-Verbose "Configured TeamCity Agent in file $teamCityConfigFile"
               
