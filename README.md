@@ -16,7 +16,9 @@ Configuration SampleConfig
             Ensure = "Present" 
             State = "Started"         
             AgentName = "TeamCity Build Agent"             
-            ServerHostname = "the public hostname or ip of your teamcity server;     
+            ServerHostname = "the public hostname or ip of your teamcity server;
+            AgentHomeDirectory = 'C:\TeamCity\Agent';
+            AgentWorkDirectory = 'F:\TeamCity\Agent\work';    
         }
     }
 }
