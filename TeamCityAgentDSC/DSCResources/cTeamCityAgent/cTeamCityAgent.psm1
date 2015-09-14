@@ -23,7 +23,7 @@ function Get-TargetResource
     
     $currentEnsure = if ($present) { "Present" } else { "Absent" }
     
-    $serviceName = GetTeamCityAgentServiceName -AgentName $AgentName
+    $serviceName = Get-TeamCityAgentServiceName -AgentName $AgentName
     Write-Verbose "Checking for Windows Service: $serviceName"
     $serviceInstance = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
     $currentState = "Stopped"
@@ -86,7 +86,7 @@ function Set-TargetResource
 
     Write-Verbose "Configuring TeamCity Agent ..."
         
-    $serviceName = GetTeamCityAgentServiceName -AgentName $AgentName
+    $serviceName = Get-TeamCityAgentServiceName -AgentName $AgentName
     
     if ($State -eq "Stopped" -and $currentResource["State"] -eq "Started") 
     {        
@@ -152,7 +152,7 @@ function Test-TargetResource
     return $true
 }
 
-function GetTeamCityAgentServiceName {
+function Get-TeamCityAgentServiceName {
     param (
         [string]$AgentName
     )
@@ -180,6 +180,19 @@ function Expand-ZipFile
     )    
     Add-Type -assembly "system.io.compression.filesystem"
     [io.compression.zipfile]::ExtractToDirectory($file, $destination)
+}
+
+function Write-TokenReplacedFile {
+    param(
+        [parameter(Position=0)][string] $fileToTokenReplace,
+        [parameter(position=1)][string] $outFile,
+        [parameter(position=2)][hashtable] $tokenValues
+    )                      
+    $fileContents = Get-Content -Raw $fileToTokenReplace
+    foreach ($token in $tokenValues.GetEnumerator()) {        
+        $fileContents = $fileContents -replace $token.Name, $token.Value
+    }     
+    [io.file]::WriteAllText($outFile,$fileContents)                             
 }
   
 function Install-TeamCityAgent
@@ -219,17 +232,19 @@ function Install-TeamCityAgent
         
 	# token replace oracle username and password
     Write-Verbose "Configuring TeamCity Agent with name: $AgentName, ownAddress: $AgentHostname, ownPort: $AgentPort, server hostname: $ServerHostname, server port: $ServerPort."
-    (cat "$AgentHomeDirectory\\conf\\buildAgent.dist.properties") `
-        -replace 'serverUrl=http://localhost:8111/', "serverUrl=http://$($ServerHostname):$($ServerPort)" `
-        -replace 'name=', "name=$AgentName" `
-        -replace 'ownPort=9090', "ownPort=$AgentPort" `
-        -replace '#ownAddress=<own IP address or server-accessible domain name>', "ownAddress=$AgentHostname" `
-        > "$AgentHomeDirectory\\conf\\buildAgent.properties"
-    
-    $serviceName = GetTeamCityAgentServiceName -AgentName $AgentName            
+    $teamCityConfigFile = "$AgentHomeDirectory\\conf\\buildAgent.properties"
+    Write-TokenReplacedFile "$AgentHomeDirectory\\conf\\buildAgent.dist.properties" $teamCityConfigFile @{
+       'serverUrl=http://localhost:8111/' = "serverUrl=http://$($ServerHostname):$($ServerPort)";
+       'name=', "name=$AgentName";
+       'ownPort=9090', "ownPort=$AgentPort";
+       '#ownAddress=<own IP address or server-accessible domain name>', "ownAddress=$AgentHostname";
+    }       
+    Write-Verbose "Configured TeamCity Agent in file $teamCityConfigFile"
+              
+    $serviceName = Get-TeamCityAgentServiceName -AgentName $AgentName            
     Write-Verbose "Installing TeamCity Agent Windows service with name $serviceName ..."        
-    Push-Location -Path "$AgentHomeDirectory\launcher\bin"
-    & .\TeamCityAgentService-windows-x86-64.exe -i ../conf/wrapper.conf
+    Push-Location -Path "$AgentHomeDirectory\bin"
+    .\service.install.bat
     Pop-Location
     Write-Verbose "Installed TeamCity Agent Windows service with name $serviceName."
             
