@@ -220,7 +220,7 @@ function Install-TeamCityAgent
 	# token replace oracle username and password
     Write-Verbose "Configuring TeamCity Agent with name: $AgentName, ownAddress: $AgentHostname, ownPort: $AgentPort, server hostname: $ServerHostname, server port: $ServerPort."
     (cat "$AgentHomeDirectory\\conf\\buildAgent.dist.properties") `
-        -replace 'serverUrl=http://localhost:8111/', "serverUrl=http://$($ServerHostname):$($ServerPort)/" `
+        -replace 'serverUrl=http://localhost:8111/', "serverUrl=http://$($ServerHostname):$($ServerPort)" `
         -replace 'name=', "name=$AgentName" `
         -replace 'ownPort=9090', "ownPort=$AgentPort" `
         -replace '#ownAddress=<own IP address or server-accessible domain name>', "ownAddress=$AgentHostname" `
@@ -228,8 +228,8 @@ function Install-TeamCityAgent
     
     $serviceName = GetTeamCityAgentServiceName -AgentName $AgentName            
     Write-Verbose "Installing TeamCity Agent Windows service with name $serviceName ..."        
-    Push-Location -Path "$AgentHomeDirectory\bin"
-    & .\service.install.bat
+    Push-Location -Path "$AgentHomeDirectory\launcher\bin"
+    & .\TeamCityAgentService-windows-x86-64.exe -i ../conf/wrapper.conf
     Pop-Location
     Write-Verbose "Installed TeamCity Agent Windows service with name $serviceName."
             
