@@ -10,4 +10,5 @@ class cTeamCityAgent : OMI_BaseResource
   [Write] UInt32 AgentPort;
   [Write] string ServerHostname;
   [Write] UInt32 ServerPort;
+  [Write] string AgentBuildParameters;
 };

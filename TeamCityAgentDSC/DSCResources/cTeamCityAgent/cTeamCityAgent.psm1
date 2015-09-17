@@ -14,7 +14,8 @@ function Get-TargetResource
         [string]$AgentHostname,        
         [int]$AgentPort,
         [string]$ServerHostname,
-        [int]$ServerPort
+        [int]$ServerPort,
+        [string]$AgentBuildParameters
     )
 
     Write-Verbose "Checking if TeamCity Agent is installed"
@@ -76,7 +77,8 @@ function Set-TargetResource
         [ValidateNotNullOrEmpty()]
         [string]$ServerHostname,
         [Parameter(Mandatory)]
-        [int]$ServerPort
+        [int]$ServerPort,
+        [string]$AgentBuildParameters
     )
 
     if ($Ensure -eq "Absent" -and $State -eq "Started") 
@@ -105,7 +107,8 @@ function Set-TargetResource
     {
         Write-Verbose "Installing TeamCity Agent..."
         Install-TeamCityAgent -AgentName $AgentName -AgentHomeDirectory $AgentHomeDirectory -AgentWorkDirectory $AgentWorkDirectory `
-            -AgentHostname $AgentHostname -AgentPort $AgentPort -ServerHostname $ServerHostname -ServerPort $ServerPort
+            -AgentHostname $AgentHostname -AgentPort $AgentPort -ServerHostname $ServerHostname -ServerPort $ServerPort `
+            -AgentBuildParameters $AgentBuildParameters
         Write-Verbose "TeamCity Agent installed!"
     }
 
@@ -133,7 +136,8 @@ function Test-TargetResource
         [string]$AgentHostname,        
         [int]$AgentPort,
         [string]$ServerHostname,
-        [int]$ServerPort
+        [int]$ServerPort,
+        [string]$AgentBuildParameters
     )
  
     $currentResource = (Get-TargetResource -AgentName $AgentName -AgentHomeDirectory $AgentHomeDirectory)
@@ -214,7 +218,8 @@ function Install-TeamCityAgent
         [Parameter(Mandatory=$True)]
         [string]$ServerHostname,        
         [Parameter(Mandatory=$True)]
-        [int]$ServerPort                     
+        [int]$ServerPort,
+        [string]$AgentBuildParameters                    
     )
    
     
@@ -234,17 +239,22 @@ function Install-TeamCityAgent
     Write-Verbose "Expanding TeamCity Agent installation zip $installationZipFilePath to directory $AgentHomeDirectory"
     Expand-ZipFile $installationZipFilePath $AgentHomeDirectory
     Write-Verbose "Expanded TeamCity Agent installation zip to directory $AgentHomeDirectory"
-        
-	# token replace oracle username and password
+        	
     Write-Verbose "Configuring TeamCity Agent with name: $AgentName, ownAddress: $AgentHostname, ownPort: $AgentPort, server hostname: $ServerHostname, server port: $ServerPort."
     $teamCityConfigFile = "$AgentHomeDirectory\\conf\\buildAgent.properties"
+    $AgentBuildParameterHashtable = convertfrom-stringdata -stringdata $AgentBuildParameters
+    $agentBuildParametersString = ''
+    $AgentBuildParameterHashtable.Keys | % { $agentBuildParametersString += "`nenv.$($_)=$($AgentBuildParameterHashtable.Item($_))" }
+
     Write-TokenReplacedFile "$AgentHomeDirectory\\conf\\buildAgent.dist.properties" $teamCityConfigFile @{
        'serverUrl=http://localhost:8111/' = "serverUrl=http://$($ServerHostname):$($ServerPort)";
        'name=' = "name=$AgentName";
        'ownPort=9090' = "ownPort=$AgentPort";
        '#ownAddress=<own IP address or server-accessible domain name>' = "ownAddress=$AgentHostname";
        'workDir=../work' = "workDir=$AgentWorkDirectory";
-    }       
+       '#env.exampleEnvVar=example Env Value' = $agentBuildParametersString;
+    }                   
+        
     Write-Verbose "Configured TeamCity Agent in file $teamCityConfigFile"
               
     $serviceName = Get-TeamCityAgentServiceName -AgentName $AgentName            
