@@ -244,7 +244,7 @@ function Install-TeamCityAgent
     $teamCityConfigFile = "$AgentHomeDirectory\\conf\\buildAgent.properties"
     $AgentBuildParameterHashtable = convertfrom-stringdata -stringdata $AgentBuildParameters
     $agentBuildParametersString = ''
-    $AgentBuildParameterHashtable.Keys | % { $agentBuildParametersString += "`nenv.$($_)=$($AgentBuildParameterHashtable.Item($_))" }
+    $AgentBuildParameterHashtable.Keys | % { $agentBuildParametersString += "`n$($_)=$($AgentBuildParameterHashtable.Item($_))" }
 
     Write-TokenReplacedFile "$AgentHomeDirectory\\conf\\buildAgent.dist.properties" $teamCityConfigFile @{
        'serverUrl=http://localhost:8111/' = "serverUrl=http://$($ServerHostname):$($ServerPort)";
