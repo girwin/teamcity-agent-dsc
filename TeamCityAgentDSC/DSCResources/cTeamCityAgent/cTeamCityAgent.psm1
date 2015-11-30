@@ -8,10 +8,10 @@ function Get-TargetResource
         [ValidateNotNullOrEmpty()]
         [string]$AgentName,
         [ValidateSet("Started", "Stopped")]
-        [string]$State = "Started",                
+        [string]$State = "Started",
         [string]$AgentHomeDirectory,
-        [string]$AgentWorkDirectory,        
-        [string]$AgentHostname,        
+        [string]$AgentWorkDirectory,
+        [string]$AgentHostname,
         [int]$AgentPort,
         [string]$ServerHostname,
         [int]$ServerPort,
@@ -22,50 +22,50 @@ function Get-TargetResource
     $installLocation = (get-itemproperty -path "HKLM:\Software\ORACLE\KEY_XE" -ErrorAction SilentlyContinue).ORACLE_HOME
     $present = Test-Path "$AgentHomeDirectory\bin\service.start.bat"
     Write-Verbose "TeamCity Agent present: $present"
-    
+
     $currentEnsure = if ($present) { "Present" } else { "Absent" }
-    
+
     $serviceName = Get-TeamCityAgentServiceName -AgentName $AgentName
     Write-Verbose "Checking for Windows Service: $serviceName"
     $serviceInstance = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
     $currentState = "Stopped"
-    if ($serviceInstance -ne $null) 
+    if ($serviceInstance -ne $null)
     {
         Write-Verbose "Windows service: $($serviceInstance.Status)"
-        if ($serviceInstance.Status -eq "Running") 
+        if ($serviceInstance.Status -eq "Running")
         {
             $currentState = "Started"
         }
-        
-        if ($currentEnsure -eq "Absent") 
+
+        if ($currentEnsure -eq "Absent")
         {
             Write-Verbose "Since the Windows Service is still installed, the service is present"
             $currentEnsure = "Present"
         }
-    } 
-    else 
+    }
+    else
     {
         Write-Verbose "Windows service: Not installed"
         $currentEnsure = "Absent"
     }
 
     return @{
-        AgentName = $AgentName; 
+        AgentName = $AgentName;
         Ensure = $currentEnsure;
         State = $currentState;
     };
 }
 
-function Set-TargetResource 
+function Set-TargetResource
 {
-    param (       
+    param (
         [ValidateSet("Present", "Absent")]
         [string]$Ensure = "Present",
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$AgentName,
         [ValidateSet("Started", "Stopped")]
-        [string]$State = "Started",               
+        [string]$State = "Started",
         [string]$AgentHomeDirectory = "C:\TeamCity\Agent",
         [string]$AgentWorkDirectory = "C:\TeamCity\Agent\work",
         [Parameter(Mandatory)]
@@ -81,7 +81,7 @@ function Set-TargetResource
         [string]$AgentBuildParameters
     )
 
-    if ($Ensure -eq "Absent" -and $State -eq "Started") 
+    if ($Ensure -eq "Absent" -and $State -eq "Started")
     {
         throw "Invalid configuration: service cannot be both 'Absent' and 'Started'"
     }
@@ -89,21 +89,21 @@ function Set-TargetResource
     $currentResource = (Get-TargetResource -AgentName $AgentName -AgentHomeDirectory $AgentHomeDirectory)
 
     Write-Verbose "Configuring TeamCity Agent ..."
-        
+
     $serviceName = Get-TeamCityAgentServiceName -AgentName $AgentName
-    
-    if ($State -eq "Stopped" -and $currentResource["State"] -eq "Started") 
-    {        
-        Write-Verbose "Stopping TeamCity Agent service $serviceName"        	    
-        Stop-Service -Name $serviceName -Force         
+
+    if ($State -eq "Stopped" -and $currentResource["State"] -eq "Started")
+    {
+        Write-Verbose "Stopping TeamCity Agent service $serviceName"
+        Stop-Service -Name $serviceName -Force
     }
 
     if ($Ensure -eq "Absent" -and $currentResource["Ensure"] -eq "Present")
-    {                
+    {
         # Uninstall TeamCity Agent
-        throw "Removal of TeamCity Agent Currently not supported by this DSC Module!"        
-    } 
-    elseif ($Ensure -eq "Present" -and $currentResource["Ensure"] -eq "Absent") 
+        throw "Removal of TeamCity Agent Currently not supported by this DSC Module!"
+    }
+    elseif ($Ensure -eq "Present" -and $currentResource["Ensure"] -eq "Absent")
     {
         Write-Verbose "Installing TeamCity Agent..."
         Install-TeamCityAgent -AgentName $AgentName -AgentHomeDirectory $AgentHomeDirectory -AgentWorkDirectory $AgentWorkDirectory `
@@ -112,46 +112,46 @@ function Set-TargetResource
         Write-Verbose "TeamCity Agent installed!"
     }
 
-    if ($State -eq "Started" -and $currentResource["State"] -eq "Stopped") 
-    {        
-        Write-Verbose "Starting TeamCity Agent service $serviceName"                    
-        Start-Service -Name $serviceName                          
+    if ($State -eq "Started" -and $currentResource["State"] -eq "Stopped")
+    {
+        Write-Verbose "Starting TeamCity Agent service $serviceName"
+        Start-Service -Name $serviceName
     }
 
     Write-Verbose "Finished"
 }
 
-function Test-TargetResource 
+function Test-TargetResource
 {
-    param (       
+    param (
         [ValidateSet("Present", "Absent")]
         [string]$Ensure = "Present",
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$AgentName,
         [ValidateSet("Started", "Stopped")]
-        [string]$State = "Started",                
+        [string]$State = "Started",
         [string]$AgentHomeDirectory,
         [string]$AgentWorkDirectory,
-        [string]$AgentHostname,        
+        [string]$AgentHostname,
         [int]$AgentPort,
         [string]$ServerHostname,
         [int]$ServerPort,
         [string]$AgentBuildParameters
     )
- 
+
     $currentResource = (Get-TargetResource -AgentName $AgentName -AgentHomeDirectory $AgentHomeDirectory)
 
     $ensureMatch = $currentResource["Ensure"] -eq $Ensure
     Write-Verbose "Ensure: $($currentResource["Ensure"]) vs. $Ensure = $ensureMatch"
-    if (!$ensureMatch) 
+    if (!$ensureMatch)
     {
         return $false
     }
-    
+
     $stateMatch = $currentResource["State"] -eq $State
     Write-Verbose "State: $($currentResource["State"]) vs. $State = $stateMatch"
-    if (!$stateMatch) 
+    if (!$stateMatch)
     {
         return $false
     }
@@ -167,13 +167,13 @@ function Get-TeamCityAgentServiceName {
     return "TCBuildAgent"
 }
 
-function Request-File 
+function Request-File
 {
     param (
         [string]$url,
         [string]$saveAs
     )
- 
+
     Write-Verbose "Downloading $url to $saveAs"
     $downloader = new-object System.Net.WebClient
     $downloader.DownloadFile($url, $saveAs)
@@ -182,9 +182,9 @@ function Request-File
 function Expand-ZipFile
 {
     param (
-        [string]$file, 
+        [string]$file,
         [string]$destination
-    )    
+    )
     Add-Type -assembly "system.io.compression.filesystem"
     [io.compression.zipfile]::ExtractToDirectory($file, $destination)
 }
@@ -194,14 +194,14 @@ function Write-TokenReplacedFile {
         [parameter(Position=0)][string] $fileToTokenReplace,
         [parameter(position=1)][string] $outFile,
         [parameter(position=2)][hashtable] $tokenValues
-    )                      
+    )
     $fileContents = Get-Content -Raw $fileToTokenReplace
-    foreach ($token in $tokenValues.GetEnumerator()) {        
+    foreach ($token in $tokenValues.GetEnumerator()) {
         $fileContents = $fileContents -replace $token.Name, $token.Value
-    }     
-    [io.file]::WriteAllText($outFile,$fileContents)                             
+    }
+    [io.file]::WriteAllText($outFile,$fileContents)
 }
-  
+
 function Install-TeamCityAgent
 {
     param (
@@ -210,36 +210,36 @@ function Install-TeamCityAgent
         [Parameter(Mandatory=$True)]
         [string]$AgentHomeDirectory,
         [Parameter(Mandatory=$True)]
-        [string]$AgentWorkDirectory,        
+        [string]$AgentWorkDirectory,
         [Parameter(Mandatory=$True)]
         [string]$AgentHostname,
         [Parameter(Mandatory=$True)]
         [int]$AgentPort,
         [Parameter(Mandatory=$True)]
-        [string]$ServerHostname,        
+        [string]$ServerHostname,
         [Parameter(Mandatory=$True)]
         [int]$ServerPort,
-        [string]$AgentBuildParameters                    
+        [string]$AgentBuildParameters
     )
-   
-    
+
+
     if ((test-path $AgentHomeDirectory) -ne $true) {
         New-Item $AgentHomeDirectory -type directory
     }
 
-    $installationZipFilePath = "$AgentHomeDirectory\TeamCityAgent.zip"        
-    if ((test-path $installationZipFilePath) -ne $true) 
+    $installationZipFilePath = "$AgentHomeDirectory\TeamCityAgent.zip"
+    if ((test-path $installationZipFilePath) -ne $true)
     {
         $TeamCityAgentInstallationZipUrl = "http://$($ServerHostname):$($ServerPort)/update/buildAgent.zip"
         Write-Verbose "Downloading TeamCity Agent installation zip from $TeamCityAgentInstallationZipUrl to $installationZipFilePath"
         Request-File $TeamCityAgentInstallationZipUrl $installationZipFilePath
         Write-Verbose "Downloaded TeamCity Agent installation zip to $installationZipFilePath"
     }
-    
+
     Write-Verbose "Expanding TeamCity Agent installation zip $installationZipFilePath to directory $AgentHomeDirectory"
     Expand-ZipFile $installationZipFilePath $AgentHomeDirectory
     Write-Verbose "Expanded TeamCity Agent installation zip to directory $AgentHomeDirectory"
-        	
+
     Write-Verbose "Configuring TeamCity Agent with name: $AgentName, ownAddress: $AgentHostname, ownPort: $AgentPort, server hostname: $ServerHostname, server port: $ServerPort."
     $teamCityConfigFile = "$AgentHomeDirectory\\conf\\buildAgent.properties"
     $AgentBuildParameterHashtable = convertfrom-stringdata -stringdata $AgentBuildParameters
@@ -253,15 +253,15 @@ function Install-TeamCityAgent
        '#ownAddress=<own IP address or server-accessible domain name>' = "ownAddress=$AgentHostname";
        'workDir=../work' = "workDir=$AgentWorkDirectory";
        '#env.exampleEnvVar=example Env Value' = $agentBuildParametersString;
-    }                   
-        
+    }
+
     Write-Verbose "Configured TeamCity Agent in file $teamCityConfigFile"
-              
-    $serviceName = Get-TeamCityAgentServiceName -AgentName $AgentName            
-    Write-Verbose "Installing TeamCity Agent Windows service with name $serviceName ..."        
+
+    $serviceName = Get-TeamCityAgentServiceName -AgentName $AgentName
+    Write-Verbose "Installing TeamCity Agent Windows service with name $serviceName ..."
     Push-Location -Path "$AgentHomeDirectory\bin"
     .\service.install.bat
     Pop-Location
     Write-Verbose "Installed TeamCity Agent Windows service with name $serviceName."
-            
+
 }
