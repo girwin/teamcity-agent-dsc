@@ -164,7 +164,7 @@ function Get-TeamCityAgentServiceName {
         [string]$AgentName
     )
     #For now just using default TeamCity Agent Service Name
-    return "TCBuildAgent"
+    return "TCBuildAgent-"+$AgentName
 }
 
 function Request-File
