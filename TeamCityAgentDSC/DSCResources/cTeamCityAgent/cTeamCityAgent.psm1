@@ -212,7 +212,7 @@ function Update-ServiceWrapper
     Write-Verbose "Updating service wrapper $wrapperPath"
 
     $wrapperContent = [IO.File]::ReadAllText($wrapperPath)
-    $wrapperContent = $wrapperContent.Replace("wrapper.ntservice.name=TCBuildAgent",("wrapper.ntservice.name="+$AgentName.Remove(" ","")))
+    $wrapperContent = $wrapperContent.Replace("wrapper.ntservice.name=TCBuildAgent",("wrapper.ntservice.name="+$AgentName.Replace(" ","")))
     $wrapperContent = $wrapperContent.Replace("wrapper.ntservice.displayname=TeamCity Build Agent",("wrapper.ntservice.displayname=TeamCity Build "+$AgentName))
     [IO.File]::WriteAllText($wrapperPath,$wrapperContent)
 }
