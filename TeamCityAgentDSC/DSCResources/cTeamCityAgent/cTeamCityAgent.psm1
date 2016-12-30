@@ -201,7 +201,21 @@ function Write-TokenReplacedFile {
     }
     [io.file]::WriteAllText($outFile,$fileContents)
 }
+function Update-ServiceWrapper
+{
+    param (
+        [Parameter(Mandatory)]
+        [string]$AgentName,
+        [Parameter(Mandatory)]
+        [string]$wrapperPath
+    )
+    Write-Verbose "Updating service wrapper $wrapperPath"
 
+    $wrapperContent = [IO.File]::ReadAllText($wrapperPath)
+    $wrapperContent = $wrapperContent.Replace("wrapper.ntservice.name=TCBuildAgent",("wrapper.ntservice.name="+$AgentName.Remove(" ","")))
+    $wrapperContent = $wrapperContent.Replace("wrapper.ntservice.displayname=TeamCity Build Agent",("wrapper.ntservice.displayname=TeamCity Build "+$AgentName))
+    [IO.File]::WriteAllText($wrapperPath,$wrapperContent)
+}
 function Install-TeamCityAgent
 {
     param (
@@ -258,6 +272,7 @@ function Install-TeamCityAgent
     Write-Verbose "Configured TeamCity Agent in file $teamCityConfigFile"
 
     $serviceName = Get-TeamCityAgentServiceName -AgentName $AgentName
+    Update-ServiceWrapper $serviceName "$AgentHomeDirectory\\launcher\\conf\\wrapper.conf"
     Write-Verbose "Installing TeamCity Agent Windows service with name $serviceName ..."
     Push-Location -Path "$AgentHomeDirectory\bin"
     .\service.install.bat
