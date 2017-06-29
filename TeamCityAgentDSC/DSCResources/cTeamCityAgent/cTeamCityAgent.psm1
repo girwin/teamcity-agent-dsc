@@ -15,7 +15,8 @@ function Get-TargetResource
         [int]$AgentPort,
         [string]$ServerHostname,
         [int]$ServerPort,
-        [string]$AgentBuildParameters
+        [string]$AgentBuildParameters,
+        [string]$JavaPath
     )
 
     Write-Verbose "Checking if TeamCity Agent is installed"
@@ -78,7 +79,8 @@ function Set-TargetResource
         [string]$ServerHostname,
         [Parameter(Mandatory)]
         [int]$ServerPort,
-        [string]$AgentBuildParameters
+        [string]$AgentBuildParameters,
+        [string]$JavaPath
     )
 
     if ($Ensure -eq "Absent" -and $State -eq "Started")
@@ -137,7 +139,8 @@ function Test-TargetResource
         [int]$AgentPort,
         [string]$ServerHostname,
         [int]$ServerPort,
-        [string]$AgentBuildParameters
+        [string]$AgentBuildParameters,
+        [string]$JavaPath
     )
 
     $currentResource = (Get-TargetResource -AgentName $AgentName -AgentHomeDirectory $AgentHomeDirectory)
@@ -207,13 +210,20 @@ function Update-ServiceWrapper
         [Parameter(Mandatory)]
         [string]$AgentName,
         [Parameter(Mandatory)]
-        [string]$wrapperPath
+        [string]$wrapperPath,
+        [string]$JavaPath
+
     )
     Write-Verbose "Updating service wrapper $wrapperPath"
 
     $wrapperContent = [IO.File]::ReadAllText($wrapperPath)
     $wrapperContent = $wrapperContent.Replace("wrapper.ntservice.name=TCBuildAgent",("wrapper.ntservice.name="+$AgentName))
     $wrapperContent = $wrapperContent.Replace("wrapper.ntservice.displayname=TeamCity Build Agent",("wrapper.ntservice.displayname="+$AgentName))
+
+    if ($PSBoundParameters.ContainsKey('JavaPath')){
+        $wrapperContent = $wrapperContent.Replace("wrapper.java.command=java",("wrapper.java.command="+$JavaPath))
+    }
+        
     [IO.File]::WriteAllText($wrapperPath,$wrapperContent)
 }
 function Install-TeamCityAgent
@@ -272,7 +282,7 @@ function Install-TeamCityAgent
     Write-Verbose "Configured TeamCity Agent in file $teamCityConfigFile"
 
     $serviceName = Get-TeamCityAgentServiceName -AgentName $AgentName
-    Update-ServiceWrapper $serviceName "$AgentHomeDirectory\\launcher\\conf\\wrapper.conf"
+    Update-ServiceWrapper $serviceName "$AgentHomeDirectory\\launcher\\conf\\wrapper.conf" $JavaPath
     Write-Verbose "Installing TeamCity Agent Windows service with name $serviceName ..."
     Push-Location -Path "$AgentHomeDirectory\bin"
     .\service.install.bat
